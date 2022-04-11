@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ============================= MATERIALIZE ============================== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- ============================= MATERIAL ICONS ============================== -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- ============================= DATA TABLE ============================== -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.css">
+    <!-- ========================== JQUERY ============================ -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- ========================== MATERIALIZE ============================ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- ============================= DATA TABLE ============================== -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
+    <!-- Scripts for Codemirror -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"
+            integrity="sha512-xwrAU5yhWwdTvvmMNheFn9IyuDbl/Kyghz2J3wQRDR8tyNmT8ZIYOd0V3iPYY/g4XdNPy0n/g0NvqGu9f0fPJQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Mode rust -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/mode/simple.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/rust/rust.min.js"
+            integrity="sha512-g3Nhw36S0p4ZJQcky87D5M+vZbFvLrgsHWYltUy5IW0zKbvi8GlPRjJSo2CyUyQiU01Ier7u+rBABDs3BawKyQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Styles for Codemirror -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css"
+          integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Theme moxer -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/moxer.min.css"
+          integrity="sha512-zrCGHGmTpiZpzVJ6BdiDfsUT6t8+oOKmOtfU82GhBo/7sk/cns7phhKXSWmGH6uACPqgjP8QmgczNBY7HMB9TQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        :root{
+            --primary-color     : #0F111A;
+            --secondary-color   : #00010A;
+            --accent-color      : #FF4151;
+            --color-0           : #3B4252;
+            --color-1           : #BF616A;
+            --foreground        : #e5e9f0;
+            --color-2           : #A3BE8C;
+            --color-3           : #EBCB8B;
+            --color-4           : #81A1C1;
+            --color-5           : #B48EAD;
+            --color-6           : #88C0D0;
+            --color-8           : #4C566A;
+        }
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body{
+            width: 100vw;
+            height: 100vh;
+            padding: 0rem 2rem;
+            background: var(--secondary-color);
+            color: var(--foreground);
+            /*overflow-x: scroll;*/
+            overflow-x: hidden;
+        }
+
+        .row, .col{
+            margin-top: 1rem;
+        }
+
+
+        nav {
+            background-color: var(--primary-color);
+            width: 100%;
+            border-radius: 25px 25px 0 0;
+        }
+
+        .nav-wrapper{
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0.5rem 0.75rem;
+        }
+
+        .nav__options li{
+            margin: 0px 5px;
+        }
+
+        .nav__options li button{
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .title-editor{
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        /**
+        * tabs
+        */
+
+        .tabs{
+            background-color: var(--primary-color);
+            height: 64px;
+            border-radius: 25px 25px 0 0;
+        }
+        .tabs li a i {
+            margin-left: 15px;
+            padding: 20px;
+        }
+
+        .tabs .indicator {
+            background-color: var(--accent-color);
+        }
+
+        .tabs .tab {
+            height: 64px;
+            line-height: 64px;
+        }
+        .tabs .tab a,
+        .tabs .tab a.active {
+            /* background-color: transparent; */
+            color: var(--foreground);
+        }
+
+        .tabs .tab a:hover {
+            /* background-color: transparent; */
+            color: #D5D5D5;
+        }
+
+        .tabs .tab a:focus,
+        .tabs .tab a:focus.active {
+            /* background-color: transparent; */
+            color: #BDBDBD;
+        }
+
+
+        .tab__panel{
+            background-color: var(--primary-color);
+            padding: 1.5rem 2rem !important;
+            min-height:39vh;
+            height:39vh;
+            border-radius: 0 0 25px 25px;
+            margin: 0;
+
+            overflow-y: auto;
+            overflow-x: scroll;
+        }
+
+        .tab__panel__btn {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /**
+        * SELECT && INPUT && DATA TABLE
+        */
+
+        .dropdown-content li {
+            background-color: var(--secondary-color) !important;
+        }
+
+        .dropdown-content li:hover {
+            background-color: var(--accent-color) !important;
+        }
+
+        .dropdown-content li:hover span {
+            color: var(--foreground);
+        }
+
+        input{
+            color: var(--foreground);
+        }
+
+
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
+            color: var(--foreground);
+        }
+
+        tbody tr td{
+            background-color: var(--primary-color) !important;
+        }
+
+        thead, tfoot{
+            background-color: var(--secondary-color) !important;
+        }
+
+
+        .container{
+            /*display: flex;*/
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            width: 100%;
+            gap: 15px;
+        }
+
+        a.paginate_button{
+            border-radius: 50% !important;
+
+        }
+        a.paginate_button.current{
+            background: var(--accent-color) !important;
+            border: 0 !important;
+
+        }
+
+        .xml__editor, .console__result{
+            /*height: 90%;*/
+        }
+
+        .editor, .console{
+
+            /*height: 100%;*/
+            /*width: 100%;*/
+        }
+
+        #form1{
+            height: 95%;
+        }
+
+        .CodeMirror {
+            height: 100%;
+            width: 100%;
+            border-radius: 0 0 25px 25px;
+            padding: 0 0.75rem;
+        }
+
+
+        #ast__visualization{
+            width: 85%;
+            height: 85%;
+            border: 1px solid var(--color-8);
+        }
+
+        .container__graph{
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+    </style>
+
+    <title>DB Rust</title>
+
+</head>
+<body>
+    <a href="" id="download" style="display: none" download=""></a>
+    <form action="http://localhost:8086/rustdb" method="post" id="form1" onsubmit="btnRun" >
+
+        <div class="container">
+            <div class="editor">
+                <nav>
+                    <div class="nav-wrapper">
+                        <ul id="nav-mobile" class="nav__options">
+                            <li>
+                                <button class="btn-floating waves-effect waves-circle waves-light red  tooltipped" data-position="bottom" data-tooltip="Open File" id="btn__open__xml">
+                                    <i class="tiny material-icons"> cloud_upload </i>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="btn-floating waves-effect waves-circle waves-light red  tooltipped" data-position="bottom" data-tooltip="Save File" id="btn__save__xml">
+                                    <i class="material-icons"> cloud_download </i>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="btn-floating waves-effect waves-circle waves-light red  tooltipped" data-position="bottom" data-tooltip="Clear Editor" id="btn__clean__xml">
+                                    <i class="material-icons"> clear </i>
+                                </button>
+                            </li>
+                        </ul>
+                        <div>
+                            <h3 class="title-editor">DB Rust - OLC2</h3>
+                        </div>
+
+                        <ul id="nav-mobile2" class="nav__options">
+                            <button class=" btn-floating red"
+                                    id="btn_run" data-position="" data-tooltip="Desc Analysis">
+                                Run
+                            </button>
+                        </ul>
+                    </div>
+                </nav>
+                <div id="" class="xml__editor">
+                    <textarea name="xml__editor" id="xml__editor">{{.Input}}</textarea>
+                </div>
+            </div>
+            <div class="console">
+                <ul class="tabs tabs-fixed-width  z-depth-5">
+                    <li class="tab"><a class="active" href="#console-tab"> Console </a></li>
+                    <li class="tab"><a class="active" href="#error__table__xml"> Error </a></li>
+                    <li class="tab"><a href="#symbol__table"> Symbol </a></li>
+                    <li class="tab"><a href="#grammar__table"> DB </a></li>
+                </ul>
+
+                <div id="console-tab" class="console__result">
+                    <textarea id="console__result">{{.Output}}</textarea>
+                </div>
+
+                <div id="error__table__xml" class="col s12 tab__panel">
+                    <table id="errorTableXml" class="display responsive nowrap ">
+                        <thead>
+                        <tr>
+                            <th>Error</th>
+                            <th>Type</th>
+                            <th>Environment</th>
+                            <th>Row</th>
+                            <th>Column</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>Error</th>
+                            <th>Type</th>
+                            <th>Environment</th>
+                            <th>Row</th>
+                            <th>Column</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div id="symbol__table" class="col s12 tab__panel">
+                    <table id="symbolTableXml" class="display responsive nowrap ">
+                        <thead>
+                        <tr>
+                            <th>Identifier</th>
+                            <th>Type</th>
+                            <th>Environment</th>
+                            <th>Value</th>
+                            <th>Row</th>
+                            <th>Column</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>Identifier</th>
+                            <th>Type</th>
+                            <th>Environment</th>
+                            <th>Value</th>
+                            <th>Row</th>
+                            <th>Column</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div id="grammar__table" class="col s12 tab__panel">
+                    <table id="grammarTable" class="display responsive nowrap ">
+                        <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Grammar</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>No.</th>
+                            <th>Grammar</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!--<table height="100%">
+            <tr>
+                <th>
+                    <div class="editor">
+                        <nav>
+                            <div class="nav-wrapper">
+                                <ul id="nav-mobile" class="nav__options">
+                                    <li>
+                                        <button class="btn-floating waves-effect waves-circle waves-light red  tooltipped" data-position="bottom" data-tooltip="Open File" id="btn__open__xml">
+                                            <i class="tiny material-icons"> cloud_upload </i>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="btn-floating waves-effect waves-circle waves-light red  tooltipped" data-position="bottom" data-tooltip="Save File" id="btn__save__xml">
+                                            <i class="material-icons"> cloud_download </i>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="btn-floating waves-effect waves-circle waves-light red  tooltipped" data-position="bottom" data-tooltip="Clear Editor" id="btn__clean__xml">
+                                            <i class="material-icons"> clear </i>
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div>
+                                    <h3 class="title-editor">DB Rust - OLC2</h3>
+                                </div>
+
+                                <ul id="nav-mobile2" class="nav__options">
+                                    <button class=" btn-floating red"
+                                            id="btn_run" data-position="" data-tooltip="Desc Analysis">
+                                        Run
+                                    </button>
+                                </ul>
+                            </div>
+                        </nav>
+                        <div id="" class="xml__editor">
+                            <textarea name="xml__editor" id="xml__editor">{{.Input}}</textarea>
+                        </div>
+                    </div>
+                </th>
+                <th>
+                    <div class="console">
+                        <ul class="tabs tabs-fixed-width  z-depth-5">
+                            <li class="tab"><a class="active" href="#console-tab"> Console </a></li>
+                            <li class="tab"><a class="active" href="#error__table__xml"> Error </a></li>
+                            <li class="tab"><a href="#symbol__table"> Symbol </a></li>
+                            <li class="tab"><a href="#grammar__table"> DB </a></li>
+                        </ul>
+
+                        <div id="console-tab" class="console__result">
+                            <textarea id="console__result">{{.Output}}</textarea>
+                        </div>
+
+                        <div id="error__table__xml" class="col s12 tab__panel">
+                            <table id="errorTableXml" class="display responsive nowrap ">
+                                <thead>
+                                <tr>
+                                    <th>Error</th>
+                                    <th>Type</th>
+                                    <th>Environment</th>
+                                    <th>Row</th>
+                                    <th>Column</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th>Error</th>
+                                    <th>Type</th>
+                                    <th>Environment</th>
+                                    <th>Row</th>
+                                    <th>Column</th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div id="symbol__table" class="col s12 tab__panel">
+                            <table id="symbolTableXml" class="display responsive nowrap ">
+                                <thead>
+                                <tr>
+                                    <th>Identifier</th>
+                                    <th>Type</th>
+                                    <th>Environment</th>
+                                    <th>Value</th>
+                                    <th>Row</th>
+                                    <th>Column</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th>Identifier</th>
+                                    <th>Type</th>
+                                    <th>Environment</th>
+                                    <th>Value</th>
+                                    <th>Row</th>
+                                    <th>Column</th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div id="grammar__table" class="col s12 tab__panel">
+                            <table id="grammarTable" class="display responsive nowrap ">
+                                <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Grammar</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Grammar</th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </th>
+            </tr>
+        </table>-->
+    </form>
+
+    <!-- ============================= MY SCRIPT ============================== -->
+    <script>
+
+        let errorTableXml, symbolTableXml, grammarTable;
+        let errorTableXpath, tokenTableXpath;
+        let QuetzalEditor;
+
+        $(document).ready(function () {
+
+            errorTableXml = $('#errorTableXml').DataTable();
+            symbolTableXml = $('#symbolTableXml').DataTable();
+            grammarTable = $('#grammarTable').DataTable();
+            errorTableXpath = $('#errorTableXpath').DataTable();
+            tokenTableXpath = $('#tokenTableXpath').DataTable();
+
+            $('.tabs').tabs();
+            $("select").formSelect();
+            $('.tooltipped').tooltip();
+
+        });
+        QuetzalEditor = editor('xml__editor');
+        consoleResult = consola('console__result');
+
+        function editor(id) {
+            return CodeMirror.fromTextArea(document.getElementById(id), {
+                lineNumbers: true,
+                styleActivateLine: true,
+                matchBrackets: true,
+                theme: "moxer",
+                mode: "text/x-rustsrc",
+
+                autofocus: true
+            });
+        }
+
+        function consola(id) {
+            return CodeMirror.fromTextArea(document.getElementById(id), {
+                lineNumbers: true,
+                mode: "text/x-rustsrc",
+                styleActiveLine: true,
+                readOnly: true,
+                theme: "moxer", //"yonce",
+                autofocus: false
+            });
+        }
+
+        const openFile = async (editor) => {
+            const { value: file } = await Swal.fire({
+                title: 'Select File',
+                input: 'file',
+            })
+            if (!file) return
+            let reader = new FileReader();
+            reader.onload = (e) => {
+                const file = e.target.result;
+                editor.setValue(file);
+            }
+            reader.onerror = (e) => {
+                console.log("Error to read file", e.target.error)
+            }
+            reader.readAsText(file)
+        }
+
+        const saveFile = async (fileName, extension, editor) => {
+            if (!fileName) {
+                const { value: name } = await Swal.fire({
+                    title: 'Enter File name',
+                    input: 'text',
+                    inputLabel: 'File name',
+                    showCancelButton: true,
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to write something!'
+                        }
+                    }
+                })
+                fileName = name;
+            }
+            if (fileName) {
+                download(`${fileName}.${extension}`, editor.getValue())
+            }
+        }
+
+        const download = (name, content) => {
+            let blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+            let link = document.getElementById('download');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", name)
+            link.click()
+        }
+
+        const cleanEditor = (editor) => {
+            editor.setValue("");
+        }
+
+        const AnalyzeQtzl = () => {
+            console.log("hola analisis")
+        }
+
+        const btnOpenXml = document.getElementById('btn__open__xml'),
+            btnSaveXml = document.getElementById('btn__save__xml'),
+            btnCleanXml = document.getElementById('btn__clean__xml'),
+            btnShowCst = document.getElementById('showAST'),
+            btnRun = document.getElementById('btn_run'),
+            btnC3d = document.getElementById('btn_c3d')
+
+        btnOpenXml.addEventListener('click', () => openFile(QuetzalEditor));
+        btnSaveXml.addEventListener('click', () => saveFile("database", "xml", QuetzalEditor));
+        btnCleanXml.addEventListener('click', () => cleanEditor(QuetzalEditor));
+        btnShowCst.addEventListener('click', () => localStorage.setItem("dot", JSON.stringify(dotStringAst)));
+        btnRun.addEventListener('click', () => AnalyzeQtzl());
+
+    </script>
+
+</body>
+</html>

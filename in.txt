@@ -1,0 +1,28 @@
+struct je{
+	hi: i64
+}
+
+struct ValoresPiv{
+    first: i64,
+    last:i64,
+    count:i64,
+  	sal: je
+}
+fn main(){
+
+  	let mut refs = ValoresPiv{
+      first:-1,
+      count:0,
+      last:-1,
+      sal: je{ hi:66 }
+  };
+  
+    let mut actualDL = [ValoresPiv{first:1,count:2,last:3,sal:je{hi:5}},
+   	ValoresPiv{first:1,count:4,last:2,sal:je{hi:7}},
+  	ValoresPiv{first:5,count:3,last:21,sal:je{hi:0}},
+  	ValoresPiv{first:2,count:40,last:1,sal:je{hi:200}}];
+   
+    println!("{}",actualDL[1]);
+   	actualDL[1].sal.hi = 666;
+    println!("{}",actualDL[1]);
+}
