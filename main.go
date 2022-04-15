@@ -42,7 +42,7 @@ func main() {
 			var C3D generator.Generator
 			C3D = Run(Code)
 			//seteando salida
-			for _, c := range C3D.GetCode().ToArray() {
+			for _, c := range C3D.GetFinalCode().ToArray() {
 				message = message + fmt.Sprintf("%v", c)
 			}
 			//fmt.Println(Ast.Symbols.ToArray())
@@ -111,10 +111,8 @@ func Run(code string) generator.Generator {
 			bloc.(interfaces.Expression).Ejecutar(&Ast, mainEnv, &Generator)
 		}
 	}
-	//add headers
-	Generator.AddHeaders()
-	//add main
-	Generator.AddMain()
+	//add headers, natives & main
+	Generator.GenerateFinalCode()
 	//generator
 	return Generator
 

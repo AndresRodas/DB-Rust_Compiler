@@ -5684,8 +5684,32 @@ type IDeclarationContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Get_LET returns the _LET token.
+	Get_LET() antlr.Token
+
+	// Get_ID returns the _ID token.
+	Get_ID() antlr.Token
+
+	// Set_LET sets the _LET token.
+	Set_LET(antlr.Token)
+
+	// Set_ID sets the _ID token.
+	Set_ID(antlr.Token)
+
+	// Get_types returns the _types rule contexts.
+	Get_types() ITypesContext
+
+	// Get_expression returns the _expression rule contexts.
+	Get_expression() IExpressionContext
+
 	// Get_vectDeclaration returns the _vectDeclaration rule contexts.
 	Get_vectDeclaration() IVectDeclarationContext
+
+	// Set_types sets the _types rule contexts.
+	Set_types(ITypesContext)
+
+	// Set_expression sets the _expression rule contexts.
+	Set_expression(IExpressionContext)
 
 	// Set_vectDeclaration sets the _vectDeclaration rule contexts.
 	Set_vectDeclaration(IVectDeclarationContext)
@@ -5704,6 +5728,10 @@ type DeclarationContext struct {
 	*antlr.BaseParserRuleContext
 	parser           antlr.Parser
 	dec              interfaces.Instruction
+	_LET             antlr.Token
+	_ID              antlr.Token
+	_types           ITypesContext
+	_expression      IExpressionContext
 	_vectDeclaration IVectDeclarationContext
 }
 
@@ -5729,7 +5757,23 @@ func NewDeclarationContext(parser antlr.Parser, parent antlr.ParserRuleContext, 
 
 func (s *DeclarationContext) GetParser() antlr.Parser { return s.parser }
 
+func (s *DeclarationContext) Get_LET() antlr.Token { return s._LET }
+
+func (s *DeclarationContext) Get_ID() antlr.Token { return s._ID }
+
+func (s *DeclarationContext) Set_LET(v antlr.Token) { s._LET = v }
+
+func (s *DeclarationContext) Set_ID(v antlr.Token) { s._ID = v }
+
+func (s *DeclarationContext) Get_types() ITypesContext { return s._types }
+
+func (s *DeclarationContext) Get_expression() IExpressionContext { return s._expression }
+
 func (s *DeclarationContext) Get_vectDeclaration() IVectDeclarationContext { return s._vectDeclaration }
+
+func (s *DeclarationContext) Set_types(v ITypesContext) { s._types = v }
+
+func (s *DeclarationContext) Set_expression(v IExpressionContext) { s._expression = v }
 
 func (s *DeclarationContext) Set_vectDeclaration(v IVectDeclarationContext) { s._vectDeclaration = v }
 
@@ -5844,7 +5888,10 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		p.EnterOuterAlt(localctx, 1)
 		{
 			p.SetState(462)
-			p.Match(RustLET)
+
+			var _m = p.Match(RustLET)
+
+			localctx.(*DeclarationContext)._LET = _m
 		}
 		{
 			p.SetState(463)
@@ -5852,7 +5899,10 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(464)
-			p.Match(RustID)
+
+			var _m = p.Match(RustID)
+
+			localctx.(*DeclarationContext)._ID = _m
 		}
 		{
 			p.SetState(465)
@@ -5860,7 +5910,10 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(466)
-			p.Types()
+
+			var _x = p.Types()
+
+			localctx.(*DeclarationContext)._types = _x
 		}
 		{
 			p.SetState(467)
@@ -5868,14 +5921,39 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(468)
-			p.expression(0)
+
+			var _x = p.expression(0)
+
+			localctx.(*DeclarationContext)._expression = _x
 		}
+		localctx.(*DeclarationContext).dec = instructions.NewDeclaration((func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetLine()
+			}
+		}()), (func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetColumn()
+			}
+		}()), (func() string {
+			if localctx.(*DeclarationContext).Get_ID() == nil {
+				return ""
+			} else {
+				return localctx.(*DeclarationContext).Get_ID().GetText()
+			}
+		}()), localctx.(*DeclarationContext).Get_types().GetTy(), localctx.(*DeclarationContext).Get_expression().GetP(), true)
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
 			p.SetState(471)
-			p.Match(RustLET)
+
+			var _m = p.Match(RustLET)
+
+			localctx.(*DeclarationContext)._LET = _m
 		}
 		{
 			p.SetState(472)
@@ -5883,7 +5961,10 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(473)
-			p.Match(RustID)
+
+			var _m = p.Match(RustID)
+
+			localctx.(*DeclarationContext)._ID = _m
 		}
 		{
 			p.SetState(474)
@@ -5891,18 +5972,46 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(475)
-			p.expression(0)
+
+			var _x = p.expression(0)
+
+			localctx.(*DeclarationContext)._expression = _x
 		}
+		localctx.(*DeclarationContext).dec = instructions.NewDeclaration((func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetLine()
+			}
+		}()), (func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetColumn()
+			}
+		}()), (func() string {
+			if localctx.(*DeclarationContext).Get_ID() == nil {
+				return ""
+			} else {
+				return localctx.(*DeclarationContext).Get_ID().GetText()
+			}
+		}()), environment.WILDCARD, localctx.(*DeclarationContext).Get_expression().GetP(), true)
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
 		{
 			p.SetState(478)
-			p.Match(RustLET)
+
+			var _m = p.Match(RustLET)
+
+			localctx.(*DeclarationContext)._LET = _m
 		}
 		{
 			p.SetState(479)
-			p.Match(RustID)
+
+			var _m = p.Match(RustID)
+
+			localctx.(*DeclarationContext)._ID = _m
 		}
 		{
 			p.SetState(480)
@@ -5910,7 +6019,10 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(481)
-			p.Types()
+
+			var _x = p.Types()
+
+			localctx.(*DeclarationContext)._types = _x
 		}
 		{
 			p.SetState(482)
@@ -5918,18 +6030,46 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(483)
-			p.expression(0)
+
+			var _x = p.expression(0)
+
+			localctx.(*DeclarationContext)._expression = _x
 		}
+		localctx.(*DeclarationContext).dec = instructions.NewDeclaration((func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetLine()
+			}
+		}()), (func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetColumn()
+			}
+		}()), (func() string {
+			if localctx.(*DeclarationContext).Get_ID() == nil {
+				return ""
+			} else {
+				return localctx.(*DeclarationContext).Get_ID().GetText()
+			}
+		}()), localctx.(*DeclarationContext).Get_types().GetTy(), localctx.(*DeclarationContext).Get_expression().GetP(), false)
 
 	case 4:
 		p.EnterOuterAlt(localctx, 4)
 		{
 			p.SetState(486)
-			p.Match(RustLET)
+
+			var _m = p.Match(RustLET)
+
+			localctx.(*DeclarationContext)._LET = _m
 		}
 		{
 			p.SetState(487)
-			p.Match(RustID)
+
+			var _m = p.Match(RustID)
+
+			localctx.(*DeclarationContext)._ID = _m
 		}
 		{
 			p.SetState(488)
@@ -5937,8 +6077,30 @@ func (p *Rust) Declaration() (localctx IDeclarationContext) {
 		}
 		{
 			p.SetState(489)
-			p.expression(0)
+
+			var _x = p.expression(0)
+
+			localctx.(*DeclarationContext)._expression = _x
 		}
+		localctx.(*DeclarationContext).dec = instructions.NewDeclaration((func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetLine()
+			}
+		}()), (func() int {
+			if localctx.(*DeclarationContext).Get_LET() == nil {
+				return 0
+			} else {
+				return localctx.(*DeclarationContext).Get_LET().GetColumn()
+			}
+		}()), (func() string {
+			if localctx.(*DeclarationContext).Get_ID() == nil {
+				return ""
+			} else {
+				return localctx.(*DeclarationContext).Get_ID().GetText()
+			}
+		}()), environment.WILDCARD, localctx.(*DeclarationContext).Get_expression().GetP(), false)
 
 	case 5:
 		p.EnterOuterAlt(localctx, 5)
@@ -12047,6 +12209,12 @@ type IListArrayContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Get_ID returns the _ID token.
+	Get_ID() antlr.Token
+
+	// Set_ID sets the _ID token.
+	Set_ID(antlr.Token)
+
 	// GetList returns the list rule contexts.
 	GetList() IListArrayContext
 
@@ -12068,6 +12236,7 @@ type ListArrayContext struct {
 	parser antlr.Parser
 	p      interfaces.Expression
 	list   IListArrayContext
+	_ID    antlr.Token
 }
 
 func NewEmptyListArrayContext() *ListArrayContext {
@@ -12091,6 +12260,10 @@ func NewListArrayContext(parser antlr.Parser, parent antlr.ParserRuleContext, in
 }
 
 func (s *ListArrayContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *ListArrayContext) Get_ID() antlr.Token { return s._ID }
+
+func (s *ListArrayContext) Set_ID(v antlr.Token) { s._ID = v }
 
 func (s *ListArrayContext) GetList() IListArrayContext { return s.list }
 
@@ -12190,8 +12363,30 @@ func (p *Rust) listArray(_p int) (localctx IListArrayContext) {
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(1206)
-		p.Match(RustID)
+
+		var _m = p.Match(RustID)
+
+		localctx.(*ListArrayContext)._ID = _m
 	}
+	localctx.(*ListArrayContext).p = expressions.NewCallVar((func() int {
+		if localctx.(*ListArrayContext).Get_ID() == nil {
+			return 0
+		} else {
+			return localctx.(*ListArrayContext).Get_ID().GetLine()
+		}
+	}()), (func() int {
+		if localctx.(*ListArrayContext).Get_ID() == nil {
+			return 0
+		} else {
+			return localctx.(*ListArrayContext).Get_ID().GetColumn()
+		}
+	}()), (func() string {
+		if localctx.(*ListArrayContext).Get_ID() == nil {
+			return ""
+		} else {
+			return localctx.(*ListArrayContext).Get_ID().GetText()
+		}
+	}()))
 
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
 	p.SetState(1221)
@@ -12244,7 +12439,10 @@ func (p *Rust) listArray(_p int) (localctx IListArrayContext) {
 				}
 				{
 					p.SetState(1217)
-					p.Match(RustID)
+
+					var _m = p.Match(RustID)
+
+					localctx.(*ListArrayContext)._ID = _m
 				}
 
 			}

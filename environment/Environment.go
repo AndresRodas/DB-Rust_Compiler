@@ -8,25 +8,28 @@ type Environment struct {
 	Anterior interface{}
 	Variable map[string]Symbol
 	Id       string
-	Size     int
+	Size     map[string]int
 }
 
 func NewEnvironment(ant interface{}, ide string) Environment {
-	return Environment{
+	env := Environment{
 		Anterior: ant,
 		Variable: make(map[string]Symbol),
 		Id:       ide,
-		Size:     0,
+		Size:     make(map[string]int),
 	}
+	env.Size["size"] = 0
+	return env
 }
 
-func (env Environment) SaveVariable(id string, value Symbol) {
+func (env Environment) SaveVariable(id string, tipo TipoExpresion) Symbol {
 	if variable, ok := env.Variable[id]; ok {
 		fmt.Println("La variable "+id+" ya existe ", variable)
-		return
+		return env.Variable[id]
 	}
-	env.Variable[id] = value
-	env.Size = env.Size + 1
+	env.Variable[id] = Symbol{Lin: 0, Col: 0, Id: id, Tipo: tipo, Posicion: env.Size["size"]}
+	env.Size["size"] = env.Size["size"] + 1
+	return env.Variable[id]
 }
 
 func (env Environment) GetVariable(id string) Symbol {

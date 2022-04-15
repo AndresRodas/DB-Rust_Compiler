@@ -22,13 +22,8 @@ func NewPrimitive(lin int, col int, valor interface{}, tipo environment.TipoExpr
 func (p Primitive) Ejecutar(ast *environment.AST, env interface{}, gen *generator.Generator) environment.Value {
 	var result environment.Value
 	if p.Tipo == environment.INTEGER || p.Tipo == environment.FLOAT {
-		result = environment.Value{
-			Value:      fmt.Sprintf("%v", p.Valor),
-			IsTemp:     false,
-			Type:       p.Tipo,
-			TrueLabel:  "",
-			FalseLabel: "",
-		}
+		result = environment.NewValue(fmt.Sprintf("%v", p.Valor), false, p.Tipo)
+		//result = environment.Value{Value: fmt.Sprintf("%v", p.Valor), IsTemp: false, Type: p.Tipo}
 	} else if p.Tipo == environment.STRING || p.Tipo == environment.STR {
 		//nuevo temporal
 		newTemp := gen.NewTemp()
@@ -46,7 +41,9 @@ func (p Primitive) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		//caracteres de escape
 		gen.AddSetHeap("(int)H", "-1")
 		gen.AddExpression("H", "H", "1", "+")
-		result = environment.Value{Value: newTemp, IsTemp: true, Type: p.Tipo, TrueLabel: "", FalseLabel: ""}
+		gen.AddBr()
+		result = environment.NewValue(newTemp, true, p.Tipo)
+		//result = environment.Value{Value: newTemp, IsTemp: true, Type: p.Tipo}
 	}
 	return result
 }

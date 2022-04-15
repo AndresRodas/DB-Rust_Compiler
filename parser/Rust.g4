@@ -181,10 +181,10 @@ impression returns [interfaces.Instruction pr]
 ;
 
 declaration returns [interfaces.Instruction dec]
-: LET MUT ID D_PTS types IGUAL expression   {}
-| LET MUT ID IGUAL expression               {}
-| LET ID D_PTS types IGUAL expression       {}
-| LET ID IGUAL expression                   {}
+: LET MUT ID D_PTS types IGUAL expression   { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, $types.ty, $expression.p, true) }
+| LET MUT ID IGUAL expression               { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, environment.WILDCARD, $expression.p, true) }
+| LET ID D_PTS types IGUAL expression       { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, $types.ty, $expression.p, false) }
+| LET ID IGUAL expression                   { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, environment.WILDCARD, $expression.p, false) }
 | LET MUT ID D_PTS arrayType IGUAL expression {}
 | LET ID D_PTS arrayType IGUAL expression   {}
 | vectDeclaration { $dec = $vectDeclaration.vec }
@@ -381,7 +381,7 @@ primitive returns[interfaces.Expression p]
 listArray returns[interfaces.Expression p]
 : list = listArray CORIZQ expression CORDER { }
 | list = listArray PUNTO ID { }
-| ID { }
+| ID { $p = expressions.NewCallVar($ID.line,$ID.pos,$ID.text) }
 ;
 
 listStructExp returns[*arrayList.List l]

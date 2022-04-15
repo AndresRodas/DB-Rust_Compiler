@@ -5,6 +5,7 @@ import (
 	"OLC2/generator"
 	"OLC2/interfaces"
 	"fmt"
+	//"github.com/colegno/arraylist"
 )
 
 type Operation struct {
@@ -64,25 +65,23 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		{environment.NULL, environment.NULL, environment.NULL, environment.NULL, environment.NULL, environment.NULL},
 	}
 
-	var op1, op2 environment.Value
-
-	op1 = o.Op_izq.Ejecutar(ast, env, gen) //si es prim numero trae el valor, //si es prim string trae temporal
-
-	if o.Op_der != nil {
-		op2 = o.Op_der.Ejecutar(ast, env, gen)
-	}
+	var op1, op2, result environment.Value
+	//var result = environment.NewValue()
 
 	newTemp := gen.NewTemp()
 
 	switch o.Operador {
 	case "+":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = suma_resta_dominante[op1.Type][op2.Type]
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "+")
-				return environment.Value{Value: newTemp, IsTemp: true, Type: dominante, TrueLabel: "", FalseLabel: ""}
-
+				result = environment.NewValue(newTemp, true, dominante)
+				//result = environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				return result
 			} else if dominante == environment.STRING {
 
 			} else {
@@ -91,22 +90,30 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		}
 	case "-":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = suma_resta_dominante[op1.Type][op2.Type]
 
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "-")
-				return environment.Value{Value: newTemp, IsTemp: true, Type: dominante, TrueLabel: "", FalseLabel: ""}
+				result = environment.NewValue(newTemp, true, dominante)
+				//return environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				return result
 			} else {
 				fmt.Println("ERROR: No es posible restar")
 			}
 		}
 	case "*":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = multi_division_dominante[op1.Type][op2.Type]
 
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "*")
-				return environment.Value{Value: newTemp, IsTemp: true, Type: dominante, TrueLabel: "", FalseLabel: ""}
+				result = environment.NewValue(newTemp, true, dominante)
+				//return environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				return result
 			} else {
 				fmt.Println("ERROR: No es posible Multiplicar")
 			}
@@ -114,11 +121,15 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		}
 	case "/":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = multi_division_dominante[op1.Type][op2.Type]
 
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "/")
-				return environment.Value{Value: newTemp, IsTemp: true, Type: dominante, TrueLabel: "", FalseLabel: ""}
+				result = environment.NewValue(newTemp, true, dominante)
+				//return environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				return result
 			} else {
 				fmt.Println("ERROR: No es posible Dividir")
 			}
@@ -126,6 +137,8 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		}
 	case "%":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = multi_division_dominante[op1.Type][op2.Type]
 
 			if dominante == environment.INTEGER {
@@ -139,10 +152,22 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		}
 	case "<":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = relacional_dominante[op1.Type][op2.Type]
-			if dominante == environment.INTEGER {
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
-			} else if dominante == environment.FLOAT {
+				trueLabel := gen.NewLabel()
+				falseLabel := gen.NewLabel()
+
+				gen.AddIf(op1.Value, op2.Value, "<", trueLabel)
+				gen.AddGoto(falseLabel)
+
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.Add(trueLabel)
+				result.FalseLabel.Add(falseLabel)
+				return result
 
 			} else {
 				fmt.Println("ERROR: No es posible comparar <")
@@ -150,89 +175,187 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		}
 	case ">":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = relacional_dominante[op1.Type][op2.Type]
-			if dominante == environment.INTEGER {
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
-			} else if dominante == environment.FLOAT {
+				trueLabel := gen.NewLabel()
+				falseLabel := gen.NewLabel()
 
+				gen.AddIf(op1.Value, op2.Value, ">", trueLabel)
+				gen.AddGoto(falseLabel)
+
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.Add(trueLabel)
+				result.FalseLabel.Add(falseLabel)
+				return result
 			} else {
-				fmt.Println("ERROR: No es posible comparar <")
+				fmt.Println("ERROR: No es posible comparar >")
 			}
 		}
 	case "<=":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = relacional_dominante[op1.Type][op2.Type]
-			if dominante == environment.INTEGER {
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
-			} else if dominante == environment.FLOAT {
+				trueLabel := gen.NewLabel()
+				falseLabel := gen.NewLabel()
 
+				gen.AddIf(op1.Value, op2.Value, "<=", trueLabel)
+				gen.AddGoto(falseLabel)
+
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.Add(trueLabel)
+				result.FalseLabel.Add(falseLabel)
+				return result
 			} else {
-				fmt.Println("ERROR: No es posible comparar <")
+				fmt.Println("ERROR: No es posible comparar <=")
 			}
 		}
 	case ">=":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = relacional_dominante[op1.Type][op2.Type]
-			if dominante == environment.INTEGER {
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
-			} else if dominante == environment.FLOAT {
+				trueLabel := gen.NewLabel()
+				falseLabel := gen.NewLabel()
 
+				gen.AddIf(op1.Value, op2.Value, ">=", trueLabel)
+				gen.AddGoto(falseLabel)
+
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.Add(trueLabel)
+				result.FalseLabel.Add(falseLabel)
+				return result
 			} else {
-				fmt.Println("ERROR: No es posible comparar <")
+				fmt.Println("ERROR: No es posible comparar >=")
 			}
 		}
 	case "==":
 		{
-			if op1.Type == op2.Type {
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
+			dominante = relacional_dominante[op1.Type][op2.Type]
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
+				trueLabel := gen.NewLabel()
+				falseLabel := gen.NewLabel()
+
+				gen.AddIf(op1.Value, op2.Value, "==", trueLabel)
+				gen.AddGoto(falseLabel)
+
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.Add(trueLabel)
+				result.FalseLabel.Add(falseLabel)
+				return result
 			} else {
-				fmt.Println("ERROR: No es posible comparar == ", o.Lin, o.Col)
+				fmt.Println("ERROR: No es posible comparar ==")
 			}
 		}
 	case "!=":
 		{
-			if op1.Type == op2.Type {
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
+			dominante = relacional_dominante[op1.Type][op2.Type]
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 
+				trueLabel := gen.NewLabel()
+				falseLabel := gen.NewLabel()
+
+				gen.AddIf(op1.Value, op2.Value, "!=", trueLabel)
+				gen.AddGoto(falseLabel)
+
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.Add(trueLabel)
+				result.FalseLabel.Add(falseLabel)
+				return result
 			} else {
 				fmt.Println("ERROR: No es posible comparar !=")
 			}
 		}
 	case "&&":
 		{
-			if (op1.Type == environment.BOOLEAN) && (op2.Type == environment.BOOLEAN) {
-
-			} else {
-				fmt.Print("ERROR: tipo no compatible &&")
+			//1- true -> 2
+			//1- false -> false
+			//2- true -> true
+			//2- false -> false
+			//1 false = 2 false
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			//add op1 labels
+			for _, lvl := range op1.TrueLabel.ToArray() {
+				gen.AddLabel(lvl.(string))
 			}
+
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
+
+			result = environment.NewValue("", false, environment.BOOLEAN)
+			//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+			result.TrueLabel.AddAll(op2.TrueLabel.ToArray())
+			result.FalseLabel.AddAll(op1.FalseLabel.ToArray())
+			result.FalseLabel.AddAll(op2.FalseLabel.ToArray())
+			return result
 		}
 	case "||":
 		{
-			if (op1.Type == environment.BOOLEAN) && (op2.Type == environment.BOOLEAN) {
-
-			} else {
-				fmt.Println("ERROR: tipo no compatible ||")
+			//1- true -> true
+			//1- false -> 2
+			//2- true -> true
+			//2- false -> false
+			//1 true = 2 true
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
+			//add op1 labels
+			for _, lvl := range op1.FalseLabel.ToArray() {
+				gen.AddLabel(lvl.(string))
 			}
+			op2 = o.Op_der.Ejecutar(ast, env, gen)
+
+			result = environment.NewValue("", false, environment.BOOLEAN)
+			//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+			result.TrueLabel.AddAll(op1.TrueLabel.ToArray())
+			result.TrueLabel.AddAll(op2.TrueLabel.ToArray())
+			result.FalseLabel.AddAll(op2.FalseLabel.ToArray())
+			return result
 		}
 	case "!":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
 			if op1.Type == environment.BOOLEAN {
-
+				result = environment.NewValue("", false, environment.BOOLEAN)
+				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
+				result.TrueLabel.AddAll(op1.FalseLabel.ToArray())
+				result.FalseLabel.AddAll(op1.TrueLabel.ToArray())
+				return result
 			} else {
 				fmt.Println("ERROR: tipo no compatible !")
 			}
 		}
 	case "MENOS_UNARIO":
 		{
+			op1 = o.Op_izq.Ejecutar(ast, env, gen)
 			if op1.Type == environment.INTEGER {
-
+				gen.AddExpression(newTemp, "0", op1.Value, "-")
+				result = environment.NewValue(newTemp, true, environment.INTEGER)
+				return result
 			} else if op1.Type == environment.FLOAT {
-
+				gen.AddExpression(newTemp, "0", op1.Value, "-")
+				result = environment.NewValue(newTemp, true, environment.FLOAT)
+				return result
 			} else {
 				fmt.Println("ERROR: tipo no compatible -")
 			}
 		}
 	}
-
+	gen.AddBr()
 	return environment.Value{}
 }
 
