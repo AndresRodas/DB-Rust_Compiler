@@ -24,7 +24,7 @@ func (p Primitive) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 	if p.Tipo == environment.INTEGER || p.Tipo == environment.FLOAT {
 		result = environment.NewValue(fmt.Sprintf("%v", p.Valor), false, p.Tipo)
 		//result = environment.Value{Value: fmt.Sprintf("%v", p.Valor), IsTemp: false, Type: p.Tipo}
-	} else if p.Tipo == environment.STRING || p.Tipo == environment.STR {
+	} else if p.Tipo == environment.STRING || p.Tipo == environment.STR || p.Tipo == environment.CHAR {
 		//nuevo temporal
 		newTemp := gen.NewTemp()
 		//iguala a heap pointer
@@ -44,6 +44,19 @@ func (p Primitive) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		gen.AddBr()
 		result = environment.NewValue(newTemp, true, p.Tipo)
 		//result = environment.Value{Value: newTemp, IsTemp: true, Type: p.Tipo}
+	} else if p.Tipo == environment.BOOLEAN {
+		gen.AddComment("Primitivo bool")
+		trueLabel := gen.NewLabel()
+		falseLabel := gen.NewLabel()
+		if p.Valor.(bool) {
+			gen.AddGoto(trueLabel)
+		} else {
+			gen.AddGoto(falseLabel)
+		}
+		result = environment.NewValue("", false, environment.BOOLEAN)
+		result.TrueLabel.Add(trueLabel)
+		result.FalseLabel.Add(falseLabel)
+
 	}
 	return result
 }

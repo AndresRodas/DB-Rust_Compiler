@@ -24,14 +24,15 @@ func (p Print) Ejecutar(ast *environment.AST, env interface{}, gen *generator.Ge
 	//Recorriendo valores a imprimir
 	for _, exp := range p.Values.ToArray() {
 		result = exp.(interfaces.Expression).Ejecutar(ast, env, gen)
-
 		if result.Type == environment.INTEGER || result.Type == environment.FLOAT {
 			gen.AddPrintf("d", "(int)"+fmt.Sprintf("%v", result.Value))
 			gen.AddPrintf("c", "10")
 			gen.AddBr()
 		} else if result.Type == environment.BOOLEAN {
+			if result.IsTemp {
+				//cuando es variable
+			}
 			newLabel := gen.NewLabel()
-			//gen.AddGoto(result.FalseLabel)
 			//add labels
 			for _, lvl := range result.TrueLabel.ToArray() {
 				gen.AddLabel(lvl.(string))
@@ -53,7 +54,7 @@ func (p Print) Ejecutar(ast *environment.AST, env interface{}, gen *generator.Ge
 			gen.AddLabel(newLabel)
 			gen.AddPrintf("c", "10")
 			gen.AddBr()
-		} else if result.Type == environment.STRING || result.Type == environment.STR {
+		} else if result.Type == environment.STRING || result.Type == environment.STR || result.Type == environment.CHAR {
 			//llamar a generar printstring
 			gen.GeneratePrintString()
 			//agregar codigo en el main

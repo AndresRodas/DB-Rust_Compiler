@@ -107,6 +107,10 @@ func (g *Generator) AddBr() {
 	g.Code.Add("\n")
 }
 
+func (g *Generator) AddComment(target string) {
+	g.Code.Add("//" + target + "\n")
+}
+
 //agregar headers
 func (g *Generator) GenerateFinalCode() {
 	//****************** add head

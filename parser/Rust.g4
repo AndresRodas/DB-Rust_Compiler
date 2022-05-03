@@ -319,7 +319,7 @@ expr_arit returns[interfaces.Expression p]
 | types C_PTS POWF PARIZQ exp1=expression COMA exp2=expression PARDER { }
 | opIz=expr_arit op=(MUL|DIV|MOD) opDe=expr_arit {$p = expressions.NewOperation($opIz.start.GetLine(),$opIz.start.GetColumn(),$opIz.p,$op.text,$opDe.p)}
 | exp=expr_arit AS types { }
-| exp=expr_arit PUNTO TOSTR { }
+| exp=expr_arit PUNTO TOSTR {$p = expressions.NewToString($exp.start.GetLine(),$exp.start.GetColumn(), $exp.p )}
 | exp=expr_arit PUNTO TOOWN { }
 | exp=expr_arit PUNTO CLONE { }
 | exp=expr_arit PUNTO ABS  { }

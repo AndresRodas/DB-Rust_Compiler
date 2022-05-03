@@ -11673,6 +11673,19 @@ func (p *Rust) expr_arit(_p int) (localctx IExpr_aritContext) {
 					p.SetState(1152)
 					p.Match(RustTOSTR)
 				}
+				localctx.(*Expr_aritContext).p = expressions.NewToString((func() antlr.Token {
+					if localctx.(*Expr_aritContext).GetExp() == nil {
+						return nil
+					} else {
+						return localctx.(*Expr_aritContext).GetExp().GetStart()
+					}
+				}()).GetLine(), (func() antlr.Token {
+					if localctx.(*Expr_aritContext).GetExp() == nil {
+						return nil
+					} else {
+						return localctx.(*Expr_aritContext).GetExp().GetStart()
+					}
+				}()).GetColumn(), localctx.(*Expr_aritContext).GetExp().GetP())
 
 			case 8:
 				localctx = NewExpr_aritContext(p, _parentctx, _parentState)
