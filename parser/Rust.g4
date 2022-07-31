@@ -27,7 +27,7 @@ start returns [environment.Code code]
 
 global_env returns [interfaces.Instruction hi]
 : declaration PYC { $hi = $declaration.dec }
-| function { }
+| function { $hi = $function.fun }
 | module {  }
 | structCreation { }
 ;
@@ -48,7 +48,7 @@ moduleContent returns[*arrayList.List m]
 ;
 
 moduleAction returns [interfaces.Instruction ma]
-: function { }
+: function { $ma = $function.fun }
 | structCreation { }
 ;
 
@@ -92,15 +92,33 @@ insVectors returns[interfaces.Instruction iv]
 ;
 
 listParamsCall returns[*arrayList.List l]
-: list=listParamsCall COMA expression{}
-| list=listParamsCall COMA AMP MUT expression {}
-| expression { }
-| AMP MUT expression { }
-|      { }
+: list=listParamsCall COMA expression{
+                                         ByRef := environment.NewByReference($expression.p, false)
+                                         $list.l.Add(ByRef);
+                                         $l = $list.l;
+                                      }
+| list=listParamsCall COMA AMP MUT expression {
+                                            ByRef := environment.NewByReference($expression.p, true)
+                                            $list.l.Add(ByRef);
+                                            $l = $list.l;
+                                         }
+| expression {
+                 ByRef := environment.NewByReference($expression.p, false)
+                 $l = arrayList.New()
+                 $l.Add(ByRef)
+              }
+| AMP MUT expression {
+                        ByRef := environment.NewByReference($expression.p, true)
+                        $l = arrayList.New()
+                        $l.Add(ByRef)
+                     }
+|      {
+          $l = arrayList.New()
+       }
 ;
 
 loopWhile returns[interfaces.Instruction lw]
-: WHILE expression LLAVEIZQ block LLAVEDER { }
+: WHILE expression LLAVEIZQ block LLAVEDER { $lw = instructions.NewWhile($WHILE.line, $WHILE.pos, $expression.p, $block.blk ) }
 ;
 
 loopBucle returns[interfaces.Instruction lb]
@@ -108,16 +126,16 @@ loopBucle returns[interfaces.Instruction lb]
 ;
 
 loopForin returns[interfaces.Instruction lfi]
-: FOR ID IN expression LLAVEIZQ block LLAVEDER { }
+: FOR ID IN expression LLAVEIZQ block LLAVEDER { $lfi = instructions.NewForIn($FOR.line, $FOR.pos, $ID.text, $expression.p, $block.blk) }
 ;
 
 transBreak returns[interfaces.Instruction brk]
-: BREAK expression { }
-| BREAK { }
+: BREAK expression { $brk = instructions.NewBreak($BREAK.line, $BREAK.pos, $expression.p) }
+| BREAK { $brk = instructions.NewBreak($BREAK.line, $BREAK.pos, nil) }
 ;
 
 transContinue returns[interfaces.Instruction cnt]
-: CONTINUE { }
+: CONTINUE { $cnt = instructions.NewContinue($CONTINUE.line, $CONTINUE.pos) }
 ;
 
 transReturn returns[interfaces.Instruction rt]
@@ -128,11 +146,22 @@ transReturn returns[interfaces.Instruction rt]
 ;
 
 condIf returns [ interfaces.Instruction ifCond ]
-: IF expression LLAVEIZQ block LLAVEDER e+=condElseIf* condElse{ }
+: IF expression LLAVEIZQ block LLAVEDER e+=condElseIf* condElse{
+            elif := arrayList.New()
+            listElif := localctx.(*CondIfContext).GetE()
+            for _, e := range listElif {
+                elif.Add(e.GetElif())
+            }
+            $ifCond = instructions.NewIf($IF.line, $IF.pos, $expression.p, $block.blk, elif, $condElse.blkelse)
+            }
 ;
 
 condElseIf returns [interfaces.Instruction elif]
-: ELSE IF expression LLAVEIZQ block LLAVEDER { }
+: ELSE IF expression LLAVEIZQ block LLAVEDER {
+    elif := arrayList.New()
+    condelse := arrayList.New()
+    $elif = instructions.NewIf($ELSE.line, $ELSE.pos, $expression.p, $block.blk, elif, condelse)
+    }
 ;
 
 condElse returns [*arrayList.List blkelse]
@@ -185,8 +214,8 @@ declaration returns [interfaces.Instruction dec]
 | LET MUT ID IGUAL expression               { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, environment.WILDCARD, $expression.p, true) }
 | LET ID D_PTS types IGUAL expression       { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, $types.ty, $expression.p, false) }
 | LET ID IGUAL expression                   { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, environment.WILDCARD, $expression.p, false) }
-| LET MUT ID D_PTS arrayType IGUAL expression {}
-| LET ID D_PTS arrayType IGUAL expression   {}
+| LET MUT ID D_PTS arrayType IGUAL expression { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, environment.ARRAY, $expression.p, true) }
+| LET ID D_PTS arrayType IGUAL expression   { $dec = instructions.NewDeclaration($LET.line,$LET.pos,$ID.text, environment.ARRAY, $expression.p, false) }
 | vectDeclaration { $dec = $vectDeclaration.vec }
 ;
 
@@ -222,7 +251,7 @@ listStructDec returns[*arrayList.List l]
 ;
 
 assignment returns [interfaces.Instruction ass]
-: ID IGUAL expression { }
+: ID IGUAL expression { $ass = instructions.NewAssignment($ID.line, $ID.pos, $ID.text, $expression.p)}
 | listAccessStruct IGUAL expression { }
 | ID listAccessArray IGUAL expression { }
 | ID CORIZQ e1=expression CORDER listArrStr IGUAL e2=expression { }
@@ -251,31 +280,112 @@ arrayType returns [*arrayList.List t]
 ;
 
 function returns [ interfaces.Instruction fun ]
-: FUNC ID PARIZQ listParamsFunc PARDER LLAVEIZQ block LLAVEDER {}
-| FUNC ID PARIZQ listParamsFunc PARDER ARROW1 types LLAVEIZQ block LLAVEDER{}
-| FUNC id1=ID PARIZQ listParamsFunc PARDER ARROW1 id2=ID LLAVEIZQ block LLAVEDER{}
-| FUNC id1=ID PARIZQ listParamsFunc PARDER ARROW1 VECTOR2 MENOR id2=ID MAYOR LLAVEIZQ block LLAVEDER{}
+: FUNC ID PARIZQ listParamsFunc PARDER LLAVEIZQ block LLAVEDER {
+                        $fun = instructions.NewFunction($FUNC.line, $FUNC.pos, $ID.text, $listParamsFunc.lpf, environment.WILDCARD, $block.blk, "")
+                        }
+| FUNC ID PARIZQ listParamsFunc PARDER ARROW1 types LLAVEIZQ block LLAVEDER{
+                       $fun = instructions.NewFunction($FUNC.line, $FUNC.pos, $ID.text, $listParamsFunc.lpf, $types.ty, $block.blk, "")
+                       }
+| FUNC id1=ID PARIZQ listParamsFunc PARDER ARROW1 id2=ID LLAVEIZQ block LLAVEDER{
+                       $fun = instructions.NewFunction($FUNC.line, $FUNC.pos, $id1.text, $listParamsFunc.lpf, environment.WILDCARD, $block.blk, $id2.text)
+                       }
+| FUNC id1=ID PARIZQ listParamsFunc PARDER ARROW1 VECTOR2 MENOR id2=ID MAYOR LLAVEIZQ block LLAVEDER{
+                       $fun = instructions.NewFunction($FUNC.line, $FUNC.pos, $id1.text, $listParamsFunc.lpf, environment.VECTOR, $block.blk, $id2.text)
+                       }
 ;
 
 listParamsFunc returns[*arrayList.List lpf]
-: list=listParamsFunc COMA ID D_PTS types {}
-| list=listParamsFunc COMA ID D_PTS AMP MUT arrayType {}
-| list=listParamsFunc COMA id1=ID D_PTS AMP MUT VECTOR2 MENOR id2=ID MAYOR {}
-| list=listParamsFunc COMA id1=ID D_PTS AMP MUT VECTOR2 MENOR types MAYOR {}
-| list=listParamsFunc COMA ID D_PTS arrayType {}
-| list=listParamsFunc COMA id1=ID D_PTS VECTOR2 MENOR id2=ID MAYOR  {}
-| list=listParamsFunc COMA id1=ID D_PTS VECTOR2 MENOR types MAYOR  {}
-| list=listParamsFunc COMA id1=ID D_PTS AMP MUT id2=ID { }
-| list=listParamsFunc COMA id1=ID D_PTS id2=ID {}
-| ID D_PTS types{ }
-| ID D_PTS AMP MUT arrayType { }
-| id1=ID D_PTS AMP MUT VECTOR2 MENOR id2=ID MAYOR {}
-| id1=ID D_PTS AMP MUT VECTOR2 MENOR types MAYOR { }
-| ID D_PTS arrayType { }
-| id1=ID D_PTS VECTOR2 MENOR id2=ID MAYOR  { }
-| id1=ID D_PTS VECTOR2 MENOR types MAYOR  { }
-| id1=ID D_PTS AMP MUT id2=ID { }
-| id1=ID D_PTS +(AMP MUT)? id2=ID {}
+: list=listParamsFunc COMA ID D_PTS types {
+                   newParam := instructions.NewParamsDeclaration($ID.line, $ID.pos, $ID.text, $types.ty, "", environment.WILDCARD)
+                   $list.lpf.Add(newParam)
+                   $lpf = $list.lpf
+                    }
+| list=listParamsFunc COMA ID D_PTS AMP MUT arrayType {
+             newParam := instructions.NewParamsDeclaration($ID.line, $ID.pos, $ID.text, environment.ARRAY, "", environment.WILDCARD)
+             $list.lpf.Add(newParam)
+             $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA id1=ID D_PTS AMP MUT VECTOR2 MENOR id2=ID MAYOR {
+             newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.VECTOR, $id2.text, environment.STRUCT)
+             $list.lpf.Add(newParam)
+             $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA id1=ID D_PTS AMP MUT VECTOR2 MENOR types MAYOR {
+             newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.VECTOR, $id2.text, $types.ty)
+             $list.lpf.Add(newParam)
+             $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA ID D_PTS arrayType {
+             newParam := instructions.NewParamsDeclaration($ID.line, $ID.pos, $ID.text, environment.ARRAY, "", environment.WILDCARD)
+             $list.lpf.Add(newParam)
+             $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA id1=ID D_PTS VECTOR2 MENOR id2=ID MAYOR  {
+             newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.WILDCARD, $id2.text, environment.STRUCT)
+             $list.lpf.Add(newParam)
+             $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA id1=ID D_PTS VECTOR2 MENOR types MAYOR  {
+             newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.VECTOR, $id2.text, $types.ty)
+             $list.lpf.Add(newParam)
+             $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA id1=ID D_PTS AMP MUT id2=ID {
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.WILDCARD, $id2.text, environment.WILDCARD)
+                 $list.lpf.Add(newParam)
+                 $lpf = $list.lpf
+              }
+| list=listParamsFunc COMA id1=ID D_PTS id2=ID {
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.WILDCARD, $id2.text, environment.WILDCARD)
+                 $list.lpf.Add(newParam)
+                 $lpf = $list.lpf
+              }
+| ID D_PTS types{
+                $lpf = arrayList.New()
+                newParam := instructions.NewParamsDeclaration($ID.line, $ID.pos, $ID.text, $types.ty, "", environment.WILDCARD)
+                $lpf.Add(newParam)
+             }
+
+| ID D_PTS AMP MUT arrayType {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($ID.line, $ID.pos, $ID.text, environment.ARRAY, "", environment.WILDCARD)
+                 $lpf.Add(newParam)
+              }
+| id1=ID D_PTS AMP MUT VECTOR2 MENOR id2=ID MAYOR {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.VECTOR, $id2.text, environment.STRUCT)
+                 $lpf.Add(newParam)
+              }
+| id1=ID D_PTS AMP MUT VECTOR2 MENOR types MAYOR {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.VECTOR, $id2.text, $types.ty)
+                 $lpf.Add(newParam)
+              }
+| ID D_PTS arrayType {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($ID.line, $ID.pos, $ID.text, environment.ARRAY,"", environment.WILDCARD)
+                 $lpf.Add(newParam)
+              }
+| id1=ID D_PTS VECTOR2 MENOR id2=ID MAYOR  {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.WILDCARD, $id2.text, environment.STRUCT)
+                 $lpf.Add(newParam)
+              }
+| id1=ID D_PTS VECTOR2 MENOR types MAYOR  {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.VECTOR, $id2.text, $types.ty)
+                 $lpf.Add(newParam)
+              }
+| id1=ID D_PTS AMP MUT id2=ID {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.WILDCARD, $id2.text, environment.STRUCT)
+                 $lpf.Add(newParam)
+              }
+| id1=ID D_PTS +(AMP MUT)? id2=ID {
+                 $lpf = arrayList.New()
+                 newParam := instructions.NewParamsDeclaration($id1.line, $id1.pos, $id1.text, environment.WILDCARD, $id2.text, environment.STRUCT)
+                 $lpf.Add(newParam)
+              }
 |  { $lpf = arrayList.New() }
 ;
 
@@ -304,13 +414,13 @@ listParams returns[*arrayList.List l]
 ;
 
 callFunction returns[interfaces.Expression cf]
-: ID PARIZQ listParamsCall PARDER PYC   { }
-| ID PARIZQ listParamsCall PARDER       { }
+: ID PARIZQ listParamsCall PARDER PYC   { $cf = expressions.NewCallExp($ID.line, $ID.pos, $ID.text, $listParamsCall.l) }
+| ID PARIZQ listParamsCall PARDER       { $cf = expressions.NewCallExp($ID.line, $ID.pos, $ID.text, $listParamsCall.l) }
 ;
 
 expression returns[interfaces.Expression p]
 : expr_arit { $p = $expr_arit.p }
-| expuno=expression PUNTO PUNTO expdos=expression {}
+| expuno=expression PUNTO PUNTO expdos=expression { $p = expressions.NewRange($expuno.start.GetLine(),$expuno.start.GetColumn(), $expuno.p, $expdos.p) }
 ;
 
 expr_arit returns[interfaces.Expression p]
@@ -319,10 +429,10 @@ expr_arit returns[interfaces.Expression p]
 | types C_PTS POWF PARIZQ exp1=expression COMA exp2=expression PARDER { }
 | opIz=expr_arit op=(MUL|DIV|MOD) opDe=expr_arit {$p = expressions.NewOperation($opIz.start.GetLine(),$opIz.start.GetColumn(),$opIz.p,$op.text,$opDe.p)}
 | exp=expr_arit AS types { }
-| exp=expr_arit PUNTO TOSTR {$p = expressions.NewToString($exp.start.GetLine(),$exp.start.GetColumn(), $exp.p )}
-| exp=expr_arit PUNTO TOOWN { }
+| exp=expr_arit PUNTO TOSTR {$p = expressions.NewToString($exp.start.GetLine(),$exp.start.GetColumn(), $exp.p)}
+| exp=expr_arit PUNTO TOOWN { $p = expressions.NewToString($exp.start.GetLine(),$exp.start.GetColumn(), $exp.p) }
 | exp=expr_arit PUNTO CLONE { }
-| exp=expr_arit PUNTO ABS  { }
+| exp=expr_arit PUNTO ABS  { $p = expressions.NewAbs($exp.start.GetLine(),$exp.start.GetColumn(), $exp.p) }
 | exp=expr_arit PUNTO SQRT { }
 | ID PUNTO REMOVE PARIZQ expression PARDER { }
 | ID PUNTO REMOVE PARIZQ expression PARDER PYC { }
@@ -335,7 +445,7 @@ expr_arit returns[interfaces.Expression p]
 | opIz=expr_arit op=AND opDe=expr_arit {$p = expressions.NewOperation($opIz.start.GetLine(),$opIz.start.GetColumn(),$opIz.p,$op.text,$opDe.p)}
 | opIz=expr_arit op=OR opDe=expr_arit {$p = expressions.NewOperation($opIz.start.GetLine(),$opIz.start.GetColumn(),$opIz.p,$op.text,$opDe.p)}
 | expVectors { $p = $expVectors.ev }
-| CORIZQ listParams CORDER { }
+| CORIZQ listParams CORDER { $p = expressions.NewArray($CORIZQ.line, $CORIZQ.pos, $listParams.l) }
 | ID LLAVEIZQ listStructExp LLAVEDER { }
 | primitive { $p = $primitive.p }
 | PARIZQ expression PARDER { $p = $expression.p }
@@ -346,7 +456,7 @@ expr_arit returns[interfaces.Expression p]
 | condIf { $p = $condIf.ifCond }
 | condMatch { $p = $condMatch.mtch }
 | loopBucle { $p = $loopBucle.lb }
-| AMP exp=expr_arit { }
+| AMP exp=expr_arit { $p = expressions.NewAmp($AMP.line, $AMP.pos, $exp.p ) }
 ;
 
 primitive returns[interfaces.Expression p]
@@ -379,7 +489,7 @@ primitive returns[interfaces.Expression p]
 ;
 
 listArray returns[interfaces.Expression p]
-: list = listArray CORIZQ expression CORDER { }
+: list = listArray CORIZQ expression CORDER { $p = expressions.NewArrayAccess($list.start.GetLine(), $list.start.GetColumn(), $list.p, $expression.p) }
 | list = listArray PUNTO ID { }
 | ID { $p = expressions.NewCallVar($ID.line,$ID.pos,$ID.text) }
 ;

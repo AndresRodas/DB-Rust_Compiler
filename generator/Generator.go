@@ -7,24 +7,34 @@ import (
 )
 
 type Generator struct {
-	Temporal        int
-	Label           int
-	Code            *arrayList.List
-	FinalCode       *arrayList.List
-	Natives         *arrayList.List
-	TempList        *arrayList.List
-	PrintStringFlag bool
+	Temporal         int
+	Label            int
+	Code             *arrayList.List
+	FinalCode        *arrayList.List
+	Natives          *arrayList.List
+	FuncCode         *arrayList.List
+	TempList         *arrayList.List
+	PrintStringFlag  bool
+	ConcatStringFlag bool
+	BreakLabel       string
+	ContinueLabel    string
+	MainCode         bool
 }
 
 func NewGenerator() Generator {
 	generator := Generator{
-		Temporal:        0,
-		Label:           0,
-		Code:            arrayList.New(),
-		FinalCode:       arrayList.New(),
-		Natives:         arrayList.New(),
-		TempList:        arrayList.New(),
-		PrintStringFlag: true,
+		Temporal:         0,
+		Label:            0,
+		Code:             arrayList.New(),
+		FinalCode:        arrayList.New(),
+		Natives:          arrayList.New(),
+		FuncCode:         arrayList.New(),
+		TempList:         arrayList.New(),
+		PrintStringFlag:  true,
+		ConcatStringFlag: true,
+		BreakLabel:       "",
+		ContinueLabel:    "",
+		MainCode:         false,
 	}
 	return generator
 }
@@ -39,6 +49,16 @@ func (g Generator) GetFinalCode() *arrayList.List {
 
 func (g Generator) GetTemps() *arrayList.List {
 	return g.TempList
+}
+
+//add break lvl
+func (g *Generator) AddBreak(lvl string) {
+	g.BreakLabel = lvl
+}
+
+//add continue lvl
+func (g *Generator) AddContinue(lvl string) {
+	g.ContinueLabel = lvl
 }
 
 //Generar un nuevo temporal
@@ -59,56 +79,126 @@ func (g *Generator) NewLabel() string {
 
 //Añade Label al codigo
 func (g *Generator) AddLabel(Label string) {
-	g.Code.Add(Label + ":\n")
+	if g.MainCode {
+		g.Code.Add(Label + ":\n")
+	} else {
+		g.FuncCode.Add(Label + ":\n")
+	}
 }
 
 func (g *Generator) AddIf(left string, right string, operator string, Label string) {
-	g.Code.Add("if(" + left + " " + operator + " " + right + ") goto " + Label + ";\n")
+	if g.MainCode {
+		g.Code.Add("if(" + left + " " + operator + " " + right + ") goto " + Label + ";\n")
+	} else {
+		g.FuncCode.Add("if(" + left + " " + operator + " " + right + ") goto " + Label + ";\n")
+	}
 }
 
 func (g *Generator) AddGoto(Label string) {
-	g.Code.Add("goto " + Label + ";\n")
+	if g.MainCode {
+		g.Code.Add("goto " + Label + ";\n")
+	} else {
+		g.FuncCode.Add("goto " + Label + ";\n")
+	}
 }
 
 func (g *Generator) AddExpression(target string, left string, right string, operator string) {
-	g.Code.Add(target + " = " + left + " " + operator + " " + right + ";\n")
+	if g.MainCode {
+		g.Code.Add(target + " = " + left + " " + operator + " " + right + ";\n")
+	} else {
+		g.FuncCode.Add(target + " = " + left + " " + operator + " " + right + ";\n")
+	}
 }
 
 func (g *Generator) AddAssign(target, val string) {
-	g.Code.Add(target + " = " + val + ";\n")
+	if g.MainCode {
+		g.Code.Add(target + " = " + val + ";\n")
+	} else {
+		g.FuncCode.Add(target + " = " + val + ";\n")
+	}
 }
 
 func (g *Generator) AddPrintf(typePrint string, value string) {
-	g.Code.Add("printf(\"%" + typePrint + "\", " + value + ");\n")
-	//g.Code.Add("printf(\"%c\", (char)10);\n")
+	if g.MainCode {
+		g.Code.Add("printf(\"%" + typePrint + "\", " + value + ");\n")
+	} else {
+		g.FuncCode.Add("printf(\"%" + typePrint + "\", " + value + ");\n")
+	}
 }
 
 func (g *Generator) AddSetHeap(index string, value string) {
-	g.Code.Add("heap[" + index + "] = " + value + ";\n")
+	if g.MainCode {
+		g.Code.Add("heap[" + index + "] = " + value + ";\n")
+	} else {
+		g.FuncCode.Add("heap[" + index + "] = " + value + ";\n")
+	}
 }
 
 func (g *Generator) AddGetHeap(target string, index string) {
-	g.Code.Add(target + " = heap[" + index + "];\n")
+	if g.MainCode {
+		g.Code.Add(target + " = heap[" + index + "];\n")
+	} else {
+		g.FuncCode.Add(target + " = heap[" + index + "];\n")
+	}
 }
 
 func (g *Generator) AddSetStack(index string, value string) {
-	g.Code.Add("stack[" + index + "] = " + value + ";\n")
+	if g.MainCode {
+		g.Code.Add("stack[" + index + "] = " + value + ";\n")
+	} else {
+		g.FuncCode.Add("stack[" + index + "] = " + value + ";\n")
+	}
 }
 
 func (g *Generator) AddGetStack(target string, index string) {
-	g.Code.Add(target + " = stack[" + index + "];\n")
+	if g.MainCode {
+		g.Code.Add(target + " = stack[" + index + "];\n")
+	} else {
+		g.FuncCode.Add(target + " = stack[" + index + "];\n")
+	}
 }
 
 func (g *Generator) AddCall(target string) {
-	g.Code.Add(target + "();\n")
+	if g.MainCode {
+		g.Code.Add(target + "();\n")
+	} else {
+		g.FuncCode.Add(target + "();\n")
+	}
 }
 
 func (g *Generator) AddBr() {
-	g.Code.Add("\n")
+	if g.MainCode {
+		g.Code.Add("\n")
+	} else {
+		g.FuncCode.Add("\n")
+	}
+
 }
 
 func (g *Generator) AddComment(target string) {
-	g.Code.Add("//" + target + "\n")
+	if g.MainCode {
+		g.Code.Add("//" + target + "\n")
+	} else {
+		g.FuncCode.Add("//" + target + "\n")
+	}
+}
+
+func (g *Generator) AddTittle(target string) {
+	if g.MainCode {
+		g.Code.Add("void " + target + "() {\n")
+	} else {
+		g.FuncCode.Add("void " + target + "() {\n")
+	}
+}
+
+func (g *Generator) AddEnd() {
+	if g.MainCode {
+		g.Code.Add("\treturn;\n")
+		g.Code.Add("}\n\n")
+	} else {
+		g.FuncCode.Add("\treturn;\n")
+		g.FuncCode.Add("}\n\n")
+	}
 }
 
 //agregar headers
@@ -135,6 +225,13 @@ func (g *Generator) GenerateFinalCode() {
 	if g.Natives.Len() > 0 {
 		g.FinalCode.Add("/*------NATIVES------*/\n")
 		for _, s := range g.Natives.ToArray() {
+			g.FinalCode.Add(s)
+		}
+	}
+	//****************** add functions
+	if g.FuncCode.Len() > 0 {
+		g.FinalCode.Add("/*------FUNCTIONS------*/\n")
+		for _, s := range g.FuncCode.ToArray() {
 			g.FinalCode.Add(s)
 		}
 	}
@@ -170,5 +267,49 @@ func (g *Generator) GeneratePrintString() {
 		g.Natives.Add("\treturn;\n")
 		g.Natives.Add("}\n\n")
 		g.PrintStringFlag = false
+	}
+}
+
+func (g *Generator) GenerateConcatString() {
+	if g.ConcatStringFlag {
+		//generando temporales y etiquetas
+		tmp1 := g.NewTemp()
+		tmp2 := g.NewTemp()
+		tmp3 := g.NewTemp()
+		tmp4 := g.NewTemp()
+		tmp5 := g.NewTemp()
+		lvl1 := g.NewLabel()
+		lvl2 := g.NewLabel()
+		lvl3 := g.NewLabel()
+		lvl4 := g.NewLabel()
+		//se genera la funcion printstring
+		g.Natives.Add("void dbrust_concatString() {\n")
+		g.Natives.Add("\t" + tmp1 + " = H;" + "\n")
+		g.Natives.Add("\t" + tmp2 + " = P + 1;" + "\n")
+		g.Natives.Add("\t" + tmp4 + " = stack[(int)" + tmp2 + "];" + "\n")
+		g.Natives.Add("\t" + tmp3 + " = P + 2;" + "\n")
+		g.Natives.Add("\t" + lvl2 + ":" + "\n")
+		g.Natives.Add("\t" + tmp5 + " = heap[(int)" + tmp4 + "];" + "\n")
+		g.Natives.Add("\t" + "if(" + tmp5 + " == -1) goto " + lvl3 + ";" + "\n")
+		g.Natives.Add("\t" + "heap[(int)H] = " + tmp5 + ";" + "\n")
+		g.Natives.Add("\t" + "H = H + 1;" + "\n")
+		g.Natives.Add("\t" + tmp4 + " = " + tmp4 + " + 1;" + "\n")
+		g.Natives.Add("\t" + "goto " + lvl2 + ";" + "\n")
+		g.Natives.Add("\t" + lvl3 + ":" + "\n")
+		g.Natives.Add("\t" + tmp4 + " = stack[(int)" + tmp3 + "];" + "\n")
+		g.Natives.Add("\t" + lvl4 + ":" + "\n")
+		g.Natives.Add("\t" + tmp5 + " = heap[(int)" + tmp4 + "];" + "\n")
+		g.Natives.Add("\t" + "if(" + tmp5 + " == -1) goto " + lvl1 + ";" + "\n")
+		g.Natives.Add("\t" + "heap[(int)H] = " + tmp5 + ";" + "\n")
+		g.Natives.Add("\t" + "H = H + 1;" + "\n")
+		g.Natives.Add("\t" + tmp4 + " = " + tmp4 + " + 1;" + "\n")
+		g.Natives.Add("\t" + "goto " + lvl4 + ";" + "\n")
+		g.Natives.Add("\t" + lvl1 + ":" + "\n")
+		g.Natives.Add("\t" + "heap[(int)H] = -1;" + "\n")
+		g.Natives.Add("\t" + "H = H + 1;" + "\n")
+		g.Natives.Add("\t" + "stack[(int)P] = " + tmp1 + ";" + "\n")
+		g.Natives.Add("\treturn;\n")
+		g.Natives.Add("}\n\n")
+		g.ConcatStringFlag = false
 	}
 }

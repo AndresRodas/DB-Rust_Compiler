@@ -24,7 +24,7 @@ func (p Print) Ejecutar(ast *environment.AST, env interface{}, gen *generator.Ge
 	//Recorriendo valores a imprimir
 	for _, exp := range p.Values.ToArray() {
 		result = exp.(interfaces.Expression).Ejecutar(ast, env, gen)
-		if result.Type == environment.INTEGER || result.Type == environment.FLOAT {
+		if result.Type == environment.INTEGER || result.Type == environment.FLOAT || result.Type == environment.ARRAY {
 			gen.AddPrintf("d", "(int)"+fmt.Sprintf("%v", result.Value))
 			gen.AddPrintf("c", "10")
 			gen.AddBr()
@@ -73,5 +73,6 @@ func (p Print) Ejecutar(ast *environment.AST, env interface{}, gen *generator.Ge
 		}
 
 	}
+
 	return result
 }

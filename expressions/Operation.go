@@ -5,6 +5,7 @@ import (
 	"OLC2/generator"
 	"OLC2/interfaces"
 	"fmt"
+	"strconv"
 	//"github.com/colegno/arraylist"
 )
 
@@ -28,7 +29,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		//STRING
 		{environment.NULL, environment.NULL, environment.NULL, environment.STRING, environment.NULL, environment.NULL},
 		//STR
-		{environment.NULL, environment.NULL, environment.NULL, environment.NULL, environment.NULL, environment.NULL},
+		{environment.NULL, environment.NULL, environment.STRING, environment.NULL, environment.NULL, environment.NULL},
 		//CHAR
 		{environment.NULL, environment.NULL, environment.NULL, environment.NULL, environment.NULL, environment.NULL},
 		//BOOLEAN
@@ -77,15 +78,33 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = suma_resta_dominante[op1.Type][op2.Type]
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
-
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "+")
-				result = environment.NewValue(newTemp, true, dominante)
-				//result = environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				result = environment.NewValue(newTemp, true, dominante, false, false, false)
+				result.IntValue = op1.IntValue + op2.IntValue
 				return result
 			} else if dominante == environment.STRING {
-
+				//llamar a generar concatstring
+				gen.GenerateConcatString()
+				//concat
+				gen.AddComment("Concatenando strings")
+				envSize := strconv.Itoa(env.(environment.Environment).Size["size"])
+				tmp1 := gen.NewTemp()
+				tmp2 := gen.NewTemp()
+				gen.AddExpression(tmp1, "P", envSize, "+")
+				gen.AddExpression(tmp1, tmp1, "1", "+")
+				gen.AddSetStack("(int)"+tmp1, op1.Value)
+				gen.AddExpression(tmp1, tmp1, "1", "+")
+				gen.AddSetStack("(int)"+tmp1, op2.Value)
+				gen.AddExpression("P", "P", envSize, "+")
+				gen.AddCall("dbrust_concatString")
+				gen.AddGetStack(tmp2, "(int)P")
+				gen.AddExpression("P", "P", envSize, "-")
+				gen.AddBr()
+				result = environment.NewValue(tmp2, true, dominante, false, false, false)
+				return result
 			} else {
-				fmt.Println("ERROR: No es posible sumar")
+				fmt.Println("ERROR: No es posible sumar ", dominante)
+				return result
 			}
 		}
 	case "-":
@@ -96,8 +115,8 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "-")
-				result = environment.NewValue(newTemp, true, dominante)
-				//return environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				result = environment.NewValue(newTemp, true, dominante, false, false, false)
+				result.IntValue = op1.IntValue - op2.IntValue
 				return result
 			} else {
 				fmt.Println("ERROR: No es posible restar")
@@ -111,8 +130,8 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "*")
-				result = environment.NewValue(newTemp, true, dominante)
-				//return environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				result = environment.NewValue(newTemp, true, dominante, false, false, false)
+				result.IntValue = op1.IntValue * op2.IntValue
 				return result
 			} else {
 				fmt.Println("ERROR: No es posible Multiplicar")
@@ -126,9 +145,26 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 			dominante = multi_division_dominante[op1.Type][op2.Type]
 
 			if dominante == environment.INTEGER || dominante == environment.FLOAT {
+
+				lvl1 := gen.NewLabel()
+				lvl2 := gen.NewLabel()
+
+				gen.AddIf(op2.Value, "0", "!=", lvl1)
+				gen.AddPrintf("c", "77")
+				gen.AddPrintf("c", "97")
+				gen.AddPrintf("c", "116")
+				gen.AddPrintf("c", "104")
+				gen.AddPrintf("c", "69")
+				gen.AddPrintf("c", "114")
+				gen.AddPrintf("c", "114")
+				gen.AddPrintf("c", "111")
+				gen.AddPrintf("c", "114")
+				gen.AddExpression(newTemp, "0", "", "")
+				gen.AddGoto(lvl2)
+				gen.AddLabel(lvl1)
 				gen.AddExpression(newTemp, op1.Value, op2.Value, "/")
-				result = environment.NewValue(newTemp, true, dominante)
-				//return environment.Value{Value: newTemp, IsTemp: true, Type: dominante}
+				gen.AddLabel(lvl2)
+				result = environment.NewValue(newTemp, true, dominante, false, false, false)
 				return result
 			} else {
 				fmt.Println("ERROR: No es posible Dividir")
@@ -141,10 +177,10 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 			op2 = o.Op_der.Ejecutar(ast, env, gen)
 			dominante = multi_division_dominante[op1.Type][op2.Type]
 
-			if dominante == environment.INTEGER {
-
-			} else if dominante == environment.FLOAT {
-
+			if dominante == environment.INTEGER || dominante == environment.FLOAT {
+				gen.AddExpression(newTemp, "fmod("+op1.Value, op2.Value+")", ",")
+				result = environment.NewValue(newTemp, true, dominante, false, false, false)
+				return result
 			} else {
 				fmt.Println("ERROR: No es posible hacer modulo ")
 			}
@@ -163,7 +199,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 				gen.AddIf(op1.Value, op2.Value, "<", trueLabel)
 				gen.AddGoto(falseLabel)
 
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.Add(trueLabel)
 				result.FalseLabel.Add(falseLabel)
@@ -186,7 +222,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 				gen.AddIf(op1.Value, op2.Value, ">", trueLabel)
 				gen.AddGoto(falseLabel)
 
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.Add(trueLabel)
 				result.FalseLabel.Add(falseLabel)
@@ -208,7 +244,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 				gen.AddIf(op1.Value, op2.Value, "<=", trueLabel)
 				gen.AddGoto(falseLabel)
 
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.Add(trueLabel)
 				result.FalseLabel.Add(falseLabel)
@@ -230,7 +266,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 				gen.AddIf(op1.Value, op2.Value, ">=", trueLabel)
 				gen.AddGoto(falseLabel)
 
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.Add(trueLabel)
 				result.FalseLabel.Add(falseLabel)
@@ -252,7 +288,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 				gen.AddIf(op1.Value, op2.Value, "==", trueLabel)
 				gen.AddGoto(falseLabel)
 
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.Add(trueLabel)
 				result.FalseLabel.Add(falseLabel)
@@ -274,7 +310,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 				gen.AddIf(op1.Value, op2.Value, "!=", trueLabel)
 				gen.AddGoto(falseLabel)
 
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.Add(trueLabel)
 				result.FalseLabel.Add(falseLabel)
@@ -298,7 +334,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 
 			op2 = o.Op_der.Ejecutar(ast, env, gen)
 
-			result = environment.NewValue("", false, environment.BOOLEAN)
+			result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 			//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 			result.TrueLabel.AddAll(op2.TrueLabel.ToArray())
 			result.FalseLabel.AddAll(op1.FalseLabel.ToArray())
@@ -319,7 +355,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 			}
 			op2 = o.Op_der.Ejecutar(ast, env, gen)
 
-			result = environment.NewValue("", false, environment.BOOLEAN)
+			result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 			//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 			result.TrueLabel.AddAll(op1.TrueLabel.ToArray())
 			result.TrueLabel.AddAll(op2.TrueLabel.ToArray())
@@ -330,7 +366,7 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 		{
 			op1 = o.Op_izq.Ejecutar(ast, env, gen)
 			if op1.Type == environment.BOOLEAN {
-				result = environment.NewValue("", false, environment.BOOLEAN)
+				result = environment.NewValue("", false, environment.BOOLEAN, false, false, false)
 				//result = environment.Value{Value: "", IsTemp: false, Type: environment.BOOLEAN}
 				result.TrueLabel.AddAll(op1.FalseLabel.ToArray())
 				result.FalseLabel.AddAll(op1.TrueLabel.ToArray())
@@ -344,11 +380,11 @@ func (o Operation) Ejecutar(ast *environment.AST, env interface{}, gen *generato
 			op1 = o.Op_izq.Ejecutar(ast, env, gen)
 			if op1.Type == environment.INTEGER {
 				gen.AddExpression(newTemp, "0", op1.Value, "-")
-				result = environment.NewValue(newTemp, true, environment.INTEGER)
+				result = environment.NewValue(newTemp, true, environment.INTEGER, false, false, false)
 				return result
 			} else if op1.Type == environment.FLOAT {
 				gen.AddExpression(newTemp, "0", op1.Value, "-")
-				result = environment.NewValue(newTemp, true, environment.FLOAT)
+				result = environment.NewValue(newTemp, true, environment.FLOAT, false, false, false)
 				return result
 			} else {
 				fmt.Println("ERROR: tipo no compatible -")

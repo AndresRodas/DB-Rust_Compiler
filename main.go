@@ -102,11 +102,16 @@ func Run(code string) generator.Generator {
 		inst.(interfaces.Instruction).Ejecutar(&Ast, globalEnv, &Generator)
 	}
 	//running main
+	Generator.MainCode = true
 	var mainEnv environment.Environment
 	mainEnv = environment.NewEnvironment(globalEnv, "MAIN")
 	for _, bloc := range Code.Main.ToArray() {
 		if strings.Contains(fmt.Sprintf("%T", bloc), "instructions") {
-			bloc.(interfaces.Instruction).Ejecutar(&Ast, mainEnv, &Generator)
+			result := bloc.(interfaces.Instruction).Ejecutar(&Ast, mainEnv, &Generator)
+			//agregando etiquetas de salida
+			for _, lvl := range result.OutLabel.ToArray() {
+				Generator.AddLabel(lvl.(string))
+			}
 		} else if strings.Contains(fmt.Sprintf("%T", bloc), "expressions") {
 			bloc.(interfaces.Expression).Ejecutar(&Ast, mainEnv, &Generator)
 		}

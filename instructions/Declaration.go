@@ -27,13 +27,9 @@ func (p Declaration) Ejecutar(ast *environment.AST, env interface{}, gen *genera
 	var newVar environment.Symbol
 	result = p.Expresion.Ejecutar(ast, env, gen)
 	gen.AddComment("Agregando una declaracion")
-	newVar = env.(environment.Environment).SaveVariable(p.Id, p.Tipo)
-	//fmt.Println("tmp: ", result.IsTemp, " Val: ", result.Value)
-	if result.IsTemp {
-		//si es temp (num,string,etc)
-		gen.AddSetStack(strconv.Itoa(newVar.Posicion), result.Value)
-		gen.AddBr()
-	} else {
+	newVar = env.(environment.Environment).SaveVariable(p.Id, p.Tipo, result.ArrType)
+
+	if result.Type == environment.BOOLEAN {
 		//si no es temp (boolean)
 		newLabel := gen.NewLabel()
 		//add labels
@@ -49,6 +45,10 @@ func (p Declaration) Ejecutar(ast *environment.AST, env interface{}, gen *genera
 		gen.AddSetStack(strconv.Itoa(newVar.Posicion), "0")
 		gen.AddGoto(newLabel)
 		gen.AddLabel(newLabel)
+		gen.AddBr()
+	} else {
+		//si es temp (num,string,etc)
+		gen.AddSetStack(strconv.Itoa(newVar.Posicion), result.Value)
 		gen.AddBr()
 	}
 

@@ -1,13 +1,8 @@
-
-
-
-
 fn main() {
 
-    println!("----------------------");
-    println!("----ARCHIVO BASICO----");
-    println!("----------------------");
-
+    println!("-----------------------------------");
+    println!("----ARCHIVO BASICO SALIDA EN 3D----");
+    println!("-----------------------------------");
 
 
     let bo1: bool = false;
@@ -17,9 +12,37 @@ fn main() {
     let letra1: char = 'c';
 
 
-    let val11 = 7 - (5 + 10 * (2 + 4 * (5 + 2 * 3)) - 8 * 3 * 3) + 50 * (6 * 2);
-    let val21 = (2 * 2 * 2 * 2) - 9 - (8 - 6 + (3 * 3 - 6 * 5 - 7 - (9 + 7 * 7 * 7) + 10) - 5) + 8 - (6 - 5 * (2 * 3));
-    let val31 = val11 + ((2 + val21 * 3) + 1 - ((2 * 2 * 2) - 2) * 2) - 2;
+    let val11 : i64 = 10 - (5 + 10 * (9 + 4 * (1 + 2 * 3)) - 8 * 3 * 6) + 5 * (2 * 2);
+    let val21 : i64 = (2 * 9 * 2 * 2) - 9 - (8 - 16 + (3 * 3 - 6 * 5 - 7 - (9 + 7 * 7 * 7) + 10) - 5) + 8 - (6 - 5 * (2 * 3));
+    let val31 : i64 = val11 + ((2 + val21 * 3) + 1 - ((2 * 2 * 2) - 2) * 2) - 2;
+
+
+
+    let a:i64 = 100;
+    let b:i64 = 100;
+    let c:i64 = 7;
+    let f:bool = true;
+    let j:f64 = 10.0;
+    let k:f64 = 10.0;
+
+
+    let val1:i64 = 5;
+    let resp:i64 = 5;
+    let mut valorVerdadero : i64 = 100;
+
+
+    let x1: i64 = 15;
+
+
+
+
+    let abs1:i64 = 7-11;
+    let abs2:f64 = 10.0;
+    let raiz1:i64 = 9;
+    let raiz2:f64 = 100.0;
+
+
+
 
     println!("El valor de val11 es:              {}",val11);
     println!("El valor de val21 es:              {}",val21);
@@ -33,32 +56,21 @@ fn main() {
     println!("");
 
 
-
-    let a:i64 = 100;
-    let b:i64 = 100;
-    let c:i64 = 7;
-    let f:bool = true;
-    let j:f64 = 10.0;
-    let k:f64 = 10.0;
-
     println!("");
     println!("");
-    if a > b || b < c {
+    if (a > b || b < c ){
         println!(">>>>>> Esto no debería de imprimirse");
     }else{
         println!(">>>>>> Esto debería de imprimirse");
     }
 
 
-    if a == b && j == k || 14 != c {
+    if (a == b && j == k || 14 != c) {
         println!(">>>>>> Esto debería de imprimirse");
     }else{
         println!(">>>>>> Esto no debería de imprimirse");
     }
 
-    let val1:i64 = 5;
-    let resp:i64 = 5;
-    let mut valorVerdadero : i64 = 100;
 
     if((valorVerdadero == (50 + 50 + (val1 - val1))) && ! ! ! ! ! ! ! ! ! ! true) {
         println!(">>>>>> En este lugar deberia de entrar :)");
@@ -72,8 +84,6 @@ fn main() {
         println!(">>>>>> Aca no deberia de entrar :cccc");
     }
 
-    let x1: i64 = 15;
-
     if x1 % 2 == 0 {
         println!(">>>>> numeroPar ingreso a if verdadero, {} es par",x1);
     }
@@ -81,34 +91,26 @@ fn main() {
         println!(">>>>> numeroPar ingreso a if falso, {} no es par",x1);
     }
 
-
-
-    let abs1:i64 = 7-11;
-    let abs2:f64 = 10.0;
-    let raiz1:i64 = 9;
-    let raiz2:f64 = 100.0;
-
-
     println!("");
     println!("*************PRUEBA DE NATIVAS");
-    println!(" valor de b: {}",b);
+    println!(" valor de b: {:?}",b);
 
     println!(" valor absoluto1: {}",abs1.abs());
     println!(" valor absoluto2: {}",abs2.abs());
-    println!(" valor raiz1: {}",(raiz1 as f64).sqrt());
-    println!(" valor raiz2: {}",raiz2.sqrt());
+    //println!(" valor raiz1: {}",(raiz1 as f64).sqrt());
+    //println!(" valor raiz2: {}",raiz2.sqrt());
 
 }
 
 
 /*
-----------------------
-----ARCHIVO BASICO----
-----------------------
-El valor de val11 es:              214
-El valor de val21 es:              412
-El valor de val31 es:              1439
-El resultado de la operación es:  1439
+-----------------------------------
+----ARCHIVO BASICO SALIDA EN 3D----
+-----------------------------------
+El valor de val11 es:              -201
+El valor de val21 es:              478
+El valor de val31 es:              1222
+El resultado de la operación es:  1222
 El valor de bo1 es:                false
 El valor de cad1 es:               imprimir
 El valor de cad21 es:               cadena valida

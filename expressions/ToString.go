@@ -21,7 +21,6 @@ func NewToString(lin int, col int, ex interface{}) ToString {
 func (p ToString) Ejecutar(ast *environment.AST, env interface{}, gen *generator.Generator) environment.Value {
 	var result, tmp environment.Value
 	tmp = p.Exp.(interfaces.Expression).Ejecutar(ast, env, gen)
-	fmt.Println("tostring type: ", tmp.Type)
 	if tmp.Type == environment.STRING || tmp.Type == environment.STR || tmp.Type == environment.CHAR {
 		tmp.Type = environment.STRING
 		result = tmp

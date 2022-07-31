@@ -5,5 +5,6 @@ type Symbol struct {
 	Col      int
 	Id       string
 	Tipo     TipoExpresion
+	TipoArr  TipoExpresion
 	Posicion int
 }
